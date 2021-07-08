@@ -15,6 +15,38 @@ class Liggghts2Gate():
                 ylim = 50,
                 zlim = 50,
                 ):
+        """
+        Liggghts2Gate Class: Use DEM outputdata and transfere it
+        into a GATE readable format. Outputs two files:
+        - Density image of the system
+        - Tracer trajectory for Gate
+        
+        You still need to make a file that tells gate the density range of each pixel.  
+        
+        Parameters
+        ----------
+        folder: str
+            Path to the folder containing all the vtk files which where 
+            outputed by LIGGGHTS
+        
+        simulation_timetsep: float
+            timestep of the simulation used in LIGGGHTS
+        
+        tracer_id: int,list,numpy-ndarray 
+            The LIGGGHTS internal particle ID of the particle used as a trajectory.
+            Multiple IDs in a list/array are possible.
+        
+        tracer_time: float
+            the time a artificial tracer should travel in the system. 
+            if no tracer ID is given, the number of tracers needed to
+            get to this time is calculated. The IDs used then start at 0.
+            Ignored if tracer_id is not None
+            
+        xlim,ylim,zlim: int
+            Number of "voxels" of the output image in each dimension
+            
+        """
+        
         self.simulation_timestep = simulation_timestep
         self.sim_files, self. sim_times = self.get_sim_files(folder)
         self.xlim = xlim
@@ -54,19 +86,40 @@ class Liggghts2Gate():
         radius = vtk_to_numpy(p.GetArray("radius"))
         p_id = vtk_to_numpy(p.GetArray("id"))
         return position, radius,p_id
-    
+        
+    def get_dimensions(self):
+        # take a random file
+        file = self.sim_files[0]
+        # change name to bounding box 
+        file_b =  "_".join(file.split("_")[:-1])+"_boundingBox_"+file.split("_")[-1]
+        with open(file_b,"r") as f:
+            lines = f.readlines()
+        xdim = np.asarray(lines[6].split(" ")[0:2], dtype = float)
+        ydim = np.asarray(lines[8].split(" ")[0:2], dtype = float)
+        zdim = np.asarray(lines[10].split(" ")[0:2], dtype = float)
+        return [xdim[0],ydim[0],zdim[0]],[xdim[1],ydim[1],zdim[1]]
+        
     def generate_data(self,image_filename, traj_filename, timestep = 0.0001):
+        voxels = np.zeros((self.xlim, self.ylim, self.zlim))
         pos = np.asarray([[0,0,0]])
         tracer_path =	[[] for x in self.tracer_id]
+        min_val, max_val = self.get_dimensions()
         for id, time in enumerate(self.sim_times):
             posi, rad, p_id = self.read_vtk(timestep = id)
-            pos =np.concatenate((pos, posi) )
+            # appending tracer path
             for t_id in self.tracer_id:
                 tracer_id = np.argmin(np.abs(p_id-t_id))
                 tracer_path[int(t_id)].append(posi[tracer_id])
+            # Make the voxel
+            for position in posi:
+                # find cells
+                xi = int( (position[0]-min_val[0])/(max_val[0]-min_val[0]) * (self.xlim -1) )
+                yi = int( (position[1]-min_val[1])/(max_val[1]-min_val[1]) * (self.ylim -1) )
+                zi = int( (position[2]-min_val[2])/(max_val[2]-min_val[2]) * (self.zlim -1) )
+                voxels[xi, yi, zi] += 1
         tracer_path = np.asarray(tracer_path).reshape((-1,3))
-        voxels, max_val = self.make_voxels(np.asarray(pos[1::],dtype = np.float))
-        self.make_voxel_image(voxels, image_filename ,max_val)
+        #voxels, max_val = self.make_voxels(np.asarray(pos[1::],dtype = np.float))
+        self.make_voxel_image(voxels, image_filename ,max_val, min_val)
         print(tracer_path)
         self.make_tracer_trajectory(tracer_path, traj_filename, timestep)
         return tracer_path
@@ -83,37 +136,19 @@ class Liggghts2Gate():
     def __del__(self):
         pass
 
-    def make_voxels(self, particle_positions):
-        voxels = np.zeros((self.xlim, self.ylim, self.zlim))
-        inf = float("inf")
-        min_val = np.asarray([inf, inf, inf])
-        max_val = np.asarray([-inf, -inf, -inf])
-        for position in particle_positions:
-            min_mask = position < min_val
-            max_mask = position > max_val
-            min_val[min_mask] = position[min_mask]
-            max_val[max_mask] = position[max_mask]
-        for position in particle_positions:
-            xi = int( (position[0]-min_val[0])/(max_val[0]-min_val[0]) * (self.xlim -1) )
-            yi = int( (position[1]-min_val[1])/(max_val[1]-min_val[1]) * (self.ylim -1) )
-            zi = int( (position[2]-min_val[2])/(max_val[2]-min_val[2]) * (self.zlim -1) )
-            voxels[xi, yi, zi] += 1
-        
-        return voxels, max_val - min_val
             
             
             
-    def make_voxel_image(self, voxels,name, max_dim = None):
+    def make_voxel_image(self, voxels,name, max_dim, min_dim):
         if not name.endswith(".mhd"):
             raise ValueError(".mhd is the only valid output type")
         img_new = sitk.GetImageFromArray(voxels)
         sitk.WriteImage(img_new, name)
-        if max_dim is not None:
-            with open(name,"r") as f:
-                mhd_input = f.readlines()
-            mhd_input[9] = f"ElementSpacing = {max_dim[2]/self.zlim*1000} {max_dim[1]/self.ylim*1000} {max_dim[0]/self.xlim*1000}\n"
-            with open(name,"w") as f:
-                f.writelines(mhd_input)       
+        with open(name,"r") as f:
+            mhd_input = f.readlines()
+        mhd_input[9] = f"ElementSpacing = {(max_dim[2]-min_dim[2])/self.zlim*1000} {(max_dim[1]-min_dim[1])/self.ylim*1000} {(max_dim[0]-min_dim[0])/self.xlim*1000}\n"
+        with open(name,"w") as f:
+            f.writelines(mhd_input)       
                 
                 
     def make_tracer_trajectory(self,trajectory,filename = 'GATE-Traj.placements' , timestep = 0.0001):
