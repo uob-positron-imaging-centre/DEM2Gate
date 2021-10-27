@@ -1,6 +1,6 @@
-# LIGGGGHTS 2 GATE - Make DEM radioactive
+# DEM 2 GATE - Make DEM radioactive
 
-The simple LIGGGHTS to GATE script enables the user to transform the particle data into a GATE- readable dataformat in 2 different steps.  
+The simple DEM to GATE script enables the user to transform the particle data into a GATE- readable dataformat in 2 different steps.  
 
 1. Generate a Volumetric Average of all particle positions to generate the scatter region due to other particles
 2. Generate a trajectory file to use one or multiple particles as tracers
