@@ -11,7 +11,7 @@ The user needs to include those files in GATE. Also a lookup-table for the diffe
 In Ipython simply run
 ```python3
 run base.py 
-d2g = DEM2Gate("data/",tracer_time = 100)
+d2g = Dem2Gate("data/",tracer_time = 100)
 d2g.generate_data(  image_filename="volume.mhd",
                     traj_filename="gate.traj"
                  ) 
