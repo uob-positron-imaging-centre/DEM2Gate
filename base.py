@@ -5,7 +5,7 @@ from glob import glob
 from natsort import natsorted
 import SimpleITK as sitk
 from scipy.interpolate import interp1d
-class Liggghts2Gate():
+class DEM2Gate():
     def __init__(self, 
                 folder,
                 simulation_timestep = 1e-5, 
@@ -16,7 +16,7 @@ class Liggghts2Gate():
                 zlim = 50,
                 ):
         """
-        Liggghts2Gate Class: Use DEM outputdata and transfere it
+        DEM2Gate Class: Use DEM outputdata and transfere it
         into a GATE readable format. Outputs two files:
         - Density image of the system
         - Tracer trajectory for Gate
@@ -27,23 +27,23 @@ class Liggghts2Gate():
         ----------
         folder: str
             Path to the folder containing all the vtk files which where 
-            outputed by LIGGGHTS
+            output by DEM software, e.g. LIGGGHTS.
         
         simulation_timetsep: float
-            timestep of the simulation used in LIGGGHTS
+            Timestep of the simulation used in DEM software.
         
         tracer_id: int,list,numpy-ndarray 
-            The LIGGGHTS internal particle ID of the particle used as a trajectory.
+            The DEM internal particle ID of the particle used as a trajectory.
             Multiple IDs in a list/array are possible.
         
         tracer_time: float
-            the time a artificial tracer should travel in the system. 
-            if no tracer ID is given, the number of tracers needed to
+            The time an artificial tracer should travel in the system. 
+            If no tracer ID is given, the number of tracers needed to
             get to this time is calculated. The IDs used then start at 0.
-            Ignored if tracer_id is not None
+            Ignored if tracer_id is not None.
             
         xlim,ylim,zlim: int
-            Number of "voxels" of the output image in each dimension
+            Number of "voxels" of the output image in each dimension.
             
         """
         
@@ -125,7 +125,7 @@ class Liggghts2Gate():
         return tracer_path
         
     def __repr__(self):
-        string = "Liggghts to GATE class\n"
+        string = "DEM to GATE class\n"
         return string
     
     def __str__(self):
