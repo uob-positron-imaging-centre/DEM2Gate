@@ -5,7 +5,7 @@ from glob import glob
 from natsort import natsorted
 import SimpleITK as sitk
 from scipy.interpolate import interp1d
-class DEM2Gate():
+class Dem2Gate():
     def __init__(self, 
                 folder,
                 simulation_timestep = 1e-5, 
@@ -16,7 +16,7 @@ class DEM2Gate():
                 zlim = 50,
                 ):
         """
-        DEM2Gate Class: Use DEM outputdata and transfere it
+        Dem2Gate Class: Use DEM outputdata and transfere it
         into a GATE readable format. Outputs two files:
         - Density image of the system
         - Tracer trajectory for Gate
