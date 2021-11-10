@@ -25,10 +25,10 @@ It will be saved in `image_filename` -path also the tracer trajectory will be sa
  You can also manualy choose the particle ID's. Simply choose the variable `tracer_id`  
  and pass either a single ID or a list/array.
  
-If you want to have multiple tracers you need to rerun the whole script whith different  
-Tracer IDs. I am sorry, Thats on our To-Do! 
+If you want to have multiple tracers you need to rerun the whole script with different  
+Tracer IDs. We are sorry, that's on our To-Do list! 
 
 ## License
 
-I am pretty sure leonard will figure something out for that!
+The `DEM2GATE` package is GPL v3.0 licensed. 
 
