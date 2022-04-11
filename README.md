@@ -1,4 +1,4 @@
-# DEM 2 GATE - Make DEM radioactive
+# DEM 2 GATE - Making DEM radioactive
 
 The simple DEM to GATE script enables the user to transform the particle data into a GATE- readable dataformat in 2 different steps.  
 
